@@ -13,7 +13,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// server.ts mein app.use(cors()) ko aise update karo
+app.use(cors({
+    origin: ["https://transit-navigator-nu.vercel.app"], // Tumhara Vercel URL
+    methods: ["GET", "POST"],
+    credentials: true
+}));
 app.use(express.json());
 
 // ==========================================
