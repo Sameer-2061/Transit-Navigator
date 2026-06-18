@@ -34,29 +34,24 @@ export default function App() {
 
   const [viewState, setViewState] = useState({ latitude: 30.7333, longitude: 76.7794, zoom: 11, pitch: 45, bearing: -10 });
 
-  // 1. Route Planner State
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
   const [routeData, setRouteData] = useState<any[]>([]); 
   const [selectedRouteIdx, setSelectedRouteIdx] = useState(0); 
   const [isCacheHit, setIsCacheHit] = useState(false);
   
-  // Dijkstra Visualizer States
   const [isDijkstraTracing, setIsDijkstraTracing] = useState(false);
   const [dijkstraStep, setDijkstraStep] = useState(0);
 
-  // 2. Local Grid Boost State
   const [simSource, setSimSource] = useState('');
   const [simDestination, setSimDestination] = useState('');
   const [simData, setSimData] = useState<any>(null);
 
-  // 3. Pan-India Greenfield State
   const [greenfieldStartName, setGreenfieldStartName] = useState('');
   const [greenfieldEndName, setGreenfieldEndName] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiRouteData, setAiRouteData] = useState<any>(null);
 
-  // 4. Network Budget (MST) State
   const [mstData, setMstData] = useState<any>(null);
   const [animatingMst, setAnimatingMst] = useState(false);
   const [currentMstStep, setCurrentMstStep] = useState(0);
@@ -74,7 +69,7 @@ export default function App() {
   }, [selectedCity]);
 
   useEffect(() => {
-    axios.get('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/cities').then(res => {
+    axios.get('https://transit-navigator.onrender.com/api/v1/cities').then(res => {
       setCities(res.data.data);
       if (res.data.data.length > 0) setSelectedCity(res.data.data[0]);
     }).catch(() => console.log("Failed to load cities."));
@@ -82,7 +77,7 @@ export default function App() {
 
   useEffect(() => {
     if (selectedCity) {
-      axios.get(`https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/stations?city=${selectedCity}`).then(res => {
+      axios.get(`https://transit-navigator.onrender.com/api/v1/stations?city=${selectedCity}`).then(res => {
         setStations(res.data.data);
         setSource(''); setDestination(''); setRouteData([]); setIsCacheHit(false); setIsDijkstraTracing(false); setDijkstraStep(0);
         setSimSource(''); setSimDestination(''); setSimData(null);
@@ -98,7 +93,7 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedCity) return;
-    const eventSource = new EventSource(`https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/telemetry/stream?city=${selectedCity}`);
+    const eventSource = new EventSource(`https://transit-navigator.onrender.com/api/v1/telemetry/stream?city=${selectedCity}`);
     eventSource.onmessage = (event) => {
       try { setRealtimeTrains(JSON.parse(event.data).trains || []); } catch (err) {}
     };
@@ -137,7 +132,7 @@ export default function App() {
     setLoading(true); setMstData(null); setCurrentMstStep(0); setAutoPlayMst(false);
     setMstLogs([ "[SYSTEM] Constructing Adjacency List...", "[SYSTEM] Ready to trace Prim's Algorithm. Click 'Next Step'." ]);
     try {
-      const res = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/network-budget', { city: selectedCity, criteria: 'distance' });
+      const res = await axios.post('https://transit-navigator.onrender.com/api/v1/routes/network-budget', { city: selectedCity, criteria: 'distance' });
       setMstData(res.data.data); setAnimatingMst(true); 
     } catch (err) { alert("Optimization failed."); }
     finally { setLoading(false); }
@@ -173,7 +168,7 @@ export default function App() {
     setDijkstraStep(0);
 
     try {
-      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/existing', { 
+      const response = await axios.post('https://transit-navigator.onrender.com/api/v1/routes/existing', { 
         source, 
         destination, 
         city: selectedCity 
@@ -187,7 +182,6 @@ export default function App() {
     }
   };
 
-  // Dijkstra Tracer Watcher
   useEffect(() => {
       if (isDijkstraTracing && routeData && routeData.length > 0 && dijkstraStep < routeData[0].exploredNodes.length) {
           const timer = setTimeout(() => setDijkstraStep(prev => prev + 1), 350); 
@@ -202,18 +196,17 @@ export default function App() {
     if (simSource === simDestination) return alert("Source and Destination cannot be the same.");
     setLoading(true); setSimData(null);
     try {
-      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/simulate-corridor', { city: selectedCity, source: simSource, destination: simDestination });
+      const response = await axios.post('https://transit-navigator.onrender.com/api/v1/routes/simulate-corridor', { city: selectedCity, source: simSource, destination: simDestination });
       setSimData(response.data);
     } catch (error: any) { alert(error.response?.data?.error || "Simulation error."); } 
     finally { setLoading(false); }
   };
 
-  // Greenfield Corridor Generation
   const handleGenerateAiGreenfieldRoute = async () => {
     if (!greenfieldStartName || !greenfieldEndName) return alert("Please provide origin and destination names.");
     setAiGenerating(true); setAiRouteData(null);
     try {
-      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/generate-future-metro', { 
+      const response = await axios.post('https://transit-navigator.onrender.com/api/v1/routes/generate-future-metro', { 
         source: greenfieldStartName, 
         destination: greenfieldEndName, 
         city: selectedCity
@@ -223,7 +216,6 @@ export default function App() {
     finally { setAiGenerating(false); }
   };
 
-  // PRIM'S VISUALIZER LOGIC
   const { visitedNodes, candidateEdges, currentMstCost } = useMemo(() => {
     if (activeMenu !== 'mst_budget' || !mstData || !animatingMst) return { visitedNodes: new Set<string>(), candidateEdges: [], currentMstCost: 0 };
     const visited = new Set<string>();
@@ -315,7 +307,6 @@ export default function App() {
     }
   }, [activeRoutePositions]);
 
-  // Soft Sky-Blue Welcome Text (Refined for high readability)
   const WelcomeText = () => {
     const chars = [
       { char: 'W', color: '#ffffff' }, 
@@ -338,7 +329,6 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: '#09090b', color: '#ededed', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* Injecting CSS Keyframes dynamically inside React */}
       <style>{`
         @keyframes trainSlide {
           0% { left: -45px; }
@@ -350,7 +340,6 @@ export default function App() {
         }
       `}</style>
 
-      {/* Header containing the vector logo, verified watermark, animated train, and sky welcome */}
       <div style={{ 
         height: '64px', 
         display: 'flex', 
@@ -362,9 +351,7 @@ export default function App() {
         backgroundColor: '#09090b',
         borderBottom: '1px solid #1f1f23'
       }}>
-        {/* Left Side: Logo & Spaced Monospaced Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Neon Crosshair SVG Logo */}
           <svg style={{ width: '28px', height: '28px', filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.5))' }} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <line x1="4" y1="4" x2="20" y2="20" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="20" y1="4" x2="4" y2="20" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
@@ -384,10 +371,7 @@ export default function App() {
           </h1>
         </div>
 
-        {/* Right Side: Developed By, Green Beacon, Realistic Train, and Sky Welcome */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          
-          {/* Premium bold white developer watermark (Big and high visibility) */}
           <span style={{ 
             fontSize: '15px', 
             color: '#ffffff', 
@@ -399,7 +383,6 @@ export default function App() {
             Developed by Sameer from NIT Kurukshetra
           </span>
 
-          {/* Active online indicator dot with simulated glow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ 
               width: '8px', 
@@ -411,7 +394,6 @@ export default function App() {
             }}></span>
           </div>
 
-          {/* SDE Animated Subway Train Indicator (Realistic segmented design with light-up windows) */}
           <div style={{
             width: '90px',
             height: '22px',
@@ -423,7 +405,6 @@ export default function App() {
             display: 'flex',
             alignItems: 'center'
           }}>
-            {/* Dashed Rail Track */}
             <div style={{
               position: 'absolute',
               left: '4px',
@@ -435,7 +416,6 @@ export default function App() {
               zIndex: 1
             }} />
             
-            {/* Sliding Train Capsule - Realistic Segmented Subway Coach */}
             <div style={{
               position: 'absolute',
               top: '50%',
@@ -453,12 +433,10 @@ export default function App() {
               justifyContent: 'space-between',
               padding: '0 3px'
             }}>
-              {/* Micro Illuminated Coach Windows */}
               <div style={{ width: '4px', height: '4px', backgroundColor: '#38bdf8', borderRadius: '0.8px', opacity: 0.8 }} />
               <div style={{ width: '4px', height: '4px', backgroundColor: '#38bdf8', borderRadius: '0.8px', opacity: 0.8 }} />
               <div style={{ width: '4px', height: '4px', backgroundColor: '#38bdf8', borderRadius: '0.8px', opacity: 0.8 }} />
               
-              {/* White Subway Lead Headlight */}
               <div style={{
                 width: '2px',
                 height: '4px',
@@ -469,11 +447,9 @@ export default function App() {
             </div>
           </div>
 
-          {/* Premium Sky Welcome Greeting */}
           <WelcomeText />
         </div>
 
-        {/* Multi-Color color-blocked segmented bottom border indicator strip */}
         <div style={{ 
           position: 'absolute', 
           bottom: 0, 
@@ -486,7 +462,6 @@ export default function App() {
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         
-        {/* SIDEBAR 1: MENU WITH SECURE CREDENTIAL VERIFICATION PANEL */}
         <div style={{ width: '150px', borderRight: '1px solid #27272a', padding: '16px 8px 12px 8px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
           <p style={{ fontSize: '10px', fontWeight: 600, color: '#71717a', paddingLeft: '8px', letterSpacing: '1px' }}>MODULES</p>
           {[
@@ -510,7 +485,6 @@ export default function App() {
             </button>
           ))}
 
-          {/* High-Fidelity Verified Portfolio Security Card linking to LinkedIn */}
           <div style={{ 
             marginTop: 'auto', 
             padding: '12px 10px', 
@@ -522,19 +496,16 @@ export default function App() {
             gap: '8px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              {/* Trust/Shield Verification SVG */}
               <svg style={{ width: '13px', height: '13px', color: '#38bdf8' }} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fillRule="evenodd" d="M2.166 4.9L10 1.154l7.834 3.746A1 1 0 0118.5 5.79v5c0 3.84-2.5 7.185-6.144 8.28l-2.356.71a1 1 0 01-.56 0l-2.356-.71A8.5 8.5 0 011.5 10.79v-5a1 1 0 01.666-.89zM10 5a1 1 0 00-.707.293l-3 3a1 1 0 001.414 1.414L9 8.414v5a1 1 0 102 0v-5l1.293 1.293a1 1 0 001.414-1.414l-3-3A1 1 0 0010 5z" clipRule="evenodd" />
               </svg>
               <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.04em' }}>DEVELOPER NODE</span>
             </div>
             
-            {/* Soft description link text */}
             <p style={{ margin: 0, fontSize: '9.5px', lineHeight: '1.3', color: '#94a3b8' }}>
               Designed & engineered by Sameer (NIT Kurukshetra). Visit my LinkedIn below for more details.
             </p>
 
-            {/* Direct hyperlinked anchor button labeled "LinkedIn" */}
             <a 
               href="https://www.linkedin.com/in/sameer-kumar-4b1062257/" 
               target="_blank" 
@@ -570,7 +541,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* SIDEBAR 2: CONFIGURATIONS */}
         <div style={{ width: '240px', borderRight: '1px solid #27272a', padding: '12px', overflowY: 'auto', flexShrink: 0 }}>
           <h2 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 600 }}>
             {activeMenu === 'route' && 'Commuter Route Planner'}
@@ -579,7 +549,6 @@ export default function App() {
             {activeMenu === 'mst_budget' && 'Infrastructure Optimizer'}
           </h2>
 
-          {/* MODULE 1: Route Planner */}
           {activeMenu === 'route' && (
             <div>
               <div style={{ marginBottom: '16px' }}>
@@ -612,7 +581,6 @@ export default function App() {
             </div>
           )}
 
-          {/* MODULE 2: Local Grid Boost */}
           {activeMenu === 'local_boost' && (
             <div>
               <div style={{ marginBottom: '16px' }}>
@@ -644,7 +612,6 @@ export default function App() {
             </div>
           )}
 
-          {/* MODULE 3: Pan-India Greenfield */}
           {activeMenu === 'greenfield' && (
             <div>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -664,7 +631,6 @@ export default function App() {
             </div>
           )}
 
-          {/* MODULE 4: Network Budget (MST) */}
           {activeMenu === 'mst_budget' && (
             <div>
               <div style={{ marginBottom: '16px' }}>
@@ -683,7 +649,6 @@ export default function App() {
             </div>
           )}
 
-          {/* OUTPUT PANELS */}
           {activeMenu === 'route' && routeData && routeData.length > 0 && (
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #27272a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -766,7 +731,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Greenfield layout panel rendering estimated construction budget */}
           {activeMenu === 'greenfield' && aiRouteData && (
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #27272a' }}>
                <h3 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#ec4899', fontWeight: 600 }}>GREENFIELD CORRIDOR LAID</h3>
@@ -816,7 +780,6 @@ export default function App() {
           <MapGL {...viewState} onMove={e => setViewState(e.viewState)} mapStyle={MAP_STYLE} mapLib={maplibregl as any} style={{ width: '100%', height: '100%' }}>
             <NavigationControl showCompass={true} showZoom={true} position="top-right" />
 
-            {/* Background Tracks */}
             {activeMenu !== 'mst_budget' && (
               <Source id="bg" type="geojson" data={bgLinesGeoJSON as any}>
                 <Layer id="bg-tracks-regular" type="line" filter={['!=', ['get', 'isWalk'], true]} paint={{ 'line-color': ['get', 'color'], 'line-width': 3, 'line-opacity': activeRouteNodes.length > 0 ? 0.15 : 0.75 }} />
@@ -824,21 +787,18 @@ export default function App() {
               </Source>
             )}
 
-            {/* Active Routing */}
             {activeLineGeoJSON && activeMenu !== 'mst_budget' && (
               <Source id="active-track" type="geojson" data={activeLineGeoJSON as any}>
                 <Layer id="active-track-layer" type="line" paint={{ 'line-color': ['get', 'color'], 'line-width': 5 }} />
               </Source>
             )}
 
-            {/* MST Candidate Edges */}
             {activeMenu === 'mst_budget' && animatingMst && candidateEdges.length > 0 && (
                <Source id="pq-candidates" type="geojson" data={candidateEdgesGeoJSON as any}>
                  <Layer id="pq-line" type="line" paint={{ 'line-color': '#0ea5e9', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.8 }} />
                </Source>
             )}
 
-            {/* MST Confirmed Edges */}
             {activeMenu === 'mst_budget' && mstData && currentMstStep > 0 && (
               <Source id="mst-tracks" type="geojson" data={{
                 type: 'FeatureCollection',
@@ -850,20 +810,17 @@ export default function App() {
               </Source>
             )}
 
-            {/* Nodes/Markers with selective opacity and Dijkstra Highlights */}
             {(!isProposedActive) && stations.map((node, idx) => {
               const isHub = node.connections && Object.keys(node.connections).length > 2;
               const isVisitedMst = activeMenu === 'mst_budget' && (animatingMst || mstData) && visitedNodes.has(node.name);
               const isPartOfActiveRoute = activeRouteNodes.some((n: any) => n.station.toLowerCase() === node.name.toLowerCase());
-              
-              // DIJKSTRA DRY RUN HIGHLIGHT LOGIC
               const isExploredByDijkstra = activeMenu === 'route' && isDijkstraTracing && routeData?.length > 0 && dijkstraStep > 0 && routeData[0].exploredNodes.slice(0, dijkstraStep).includes(node.name);
               
               let opacityVal = 1.0;
               if (activeMenu === 'mst_budget') {
                 if ((animatingMst || mstData) && !isVisitedMst) opacityVal = 0.2;
               } else if (activeMenu === 'route' && isDijkstraTracing) {
-                if (!isExploredByDijkstra) opacityVal = 0.3; // Dim unexplored nodes during trace
+                if (!isExploredByDijkstra) opacityVal = 0.3;
               } else {
                 if (activeRouteNodes.length > 0 && !isPartOfActiveRoute) opacityVal = 0.2;
               }
@@ -891,7 +848,6 @@ export default function App() {
               );
             })}
 
-            {/* Active Highlighted Route Stations Text Labels */}
             {activeMenu !== 'mst_budget' && !isDijkstraTracing && activeRouteNodes.map((node: any, idx: number) => {
               const color = getActiveNodeColor(node, idx);
               return (
@@ -906,7 +862,6 @@ export default function App() {
               );
             })}
 
-            {/* Realtime Live Telemetry Trains */}
             {activeRoutePositions.length === 0 && activeMenu !== 'mst_budget' && realtimeTrains.map((train) => (
               <Marker key={train.id} latitude={train.lat} longitude={train.lng}>
                 <div 
@@ -920,7 +875,6 @@ export default function App() {
               </Marker>
             ))}
 
-            {/* Station Popups */}
             {selectedPopupStation && (
               <Popup latitude={selectedPopupStation.lat} longitude={selectedPopupStation.lng} onClose={() => setSelectedPopupStation(null)} closeButton={true} closeOnClick={false} anchor="top">
                 <div style={{ color: '#09090b', fontFamily: 'Inter', fontSize: '12px', padding: '4px' }}>
@@ -940,7 +894,6 @@ export default function App() {
             )}
           </MapGL>
 
-          {/* DIJKSTRA LIVE TRACE OVERLAY (Moved to Left Side) */}
           {activeMenu === 'route' && isDijkstraTracing && routeData && routeData.length > 0 && (
             <div style={{ position: 'absolute', bottom: '30px', left: '20px', width: '340px', backgroundColor: 'rgba(9, 9, 11, 0.95)', border: '1px solid #eab308', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', zIndex: 100 }}>
               <span style={{ fontSize: '12px', color: '#eab308', fontWeight: 700, marginBottom: '8px' }}>DIJKSTRA ALGORITHM TRACE</span>
@@ -957,7 +910,6 @@ export default function App() {
             </div>
           )}
 
-          {/* PRIM'S LIVE TRACE OVERLAY */}
           {activeMenu === 'mst_budget' && (mstData || animatingMst) && (
             <div style={{ position: 'absolute', bottom: '30px', left: '20px', width: '340px', backgroundColor: 'rgba(9, 9, 11, 0.95)', border: '1px solid #27272a', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', zIndex: 100 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -989,4 +941,3 @@ export default function App() {
     </div>
   );
 }
-
