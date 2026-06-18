@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                                  /* Set JS version */
+    "module": "CommonJS",                                /* Standard Node.js module system */
+    "rootDir": "./src",                                  /* Source folder */
+    "outDir": "./dist",                                  /* Compiled output folder */
+    "esModuleInterop": true,                             /* Fixes 'import express from express' errors */
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,                                      /* Enables all strict type-checking options */
+    "skipLibCheck": true,                                /* Skips checking node_modules to boost speed */
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"]
+}
