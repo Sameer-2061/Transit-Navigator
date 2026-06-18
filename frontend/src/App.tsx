@@ -74,7 +74,7 @@ export default function App() {
   }, [selectedCity]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/v1/cities').then(res => {
+    axios.get('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/cities').then(res => {
       setCities(res.data.data);
       if (res.data.data.length > 0) setSelectedCity(res.data.data[0]);
     }).catch(() => console.log("Failed to load cities."));
@@ -82,7 +82,7 @@ export default function App() {
 
   useEffect(() => {
     if (selectedCity) {
-      axios.get(`http://localhost:5000/api/v1/stations?city=${selectedCity}`).then(res => {
+      axios.get(`https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/stations?city=${selectedCity}`).then(res => {
         setStations(res.data.data);
         setSource(''); setDestination(''); setRouteData([]); setIsCacheHit(false); setIsDijkstraTracing(false); setDijkstraStep(0);
         setSimSource(''); setSimDestination(''); setSimData(null);
@@ -98,7 +98,7 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedCity) return;
-    const eventSource = new EventSource(`http://localhost:5000/api/v1/telemetry/stream?city=${selectedCity}`);
+    const eventSource = new EventSource(`https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/telemetry/stream?city=${selectedCity}`);
     eventSource.onmessage = (event) => {
       try { setRealtimeTrains(JSON.parse(event.data).trains || []); } catch (err) {}
     };
@@ -137,7 +137,7 @@ export default function App() {
     setLoading(true); setMstData(null); setCurrentMstStep(0); setAutoPlayMst(false);
     setMstLogs([ "[SYSTEM] Constructing Adjacency List...", "[SYSTEM] Ready to trace Prim's Algorithm. Click 'Next Step'." ]);
     try {
-      const res = await axios.post('http://localhost:5000/api/v1/routes/network-budget', { city: selectedCity, criteria: 'distance' });
+      const res = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/network-budget', { city: selectedCity, criteria: 'distance' });
       setMstData(res.data.data); setAnimatingMst(true); 
     } catch (err) { alert("Optimization failed."); }
     finally { setLoading(false); }
@@ -173,7 +173,7 @@ export default function App() {
     setDijkstraStep(0);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/routes/existing', { 
+      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/existing', { 
         source, 
         destination, 
         city: selectedCity 
@@ -202,7 +202,7 @@ export default function App() {
     if (simSource === simDestination) return alert("Source and Destination cannot be the same.");
     setLoading(true); setSimData(null);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/routes/simulate-corridor', { city: selectedCity, source: simSource, destination: simDestination });
+      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/simulate-corridor', { city: selectedCity, source: simSource, destination: simDestination });
       setSimData(response.data);
     } catch (error: any) { alert(error.response?.data?.error || "Simulation error."); } 
     finally { setLoading(false); }
@@ -213,7 +213,7 @@ export default function App() {
     if (!greenfieldStartName || !greenfieldEndName) return alert("Please provide origin and destination names.");
     setAiGenerating(true); setAiRouteData(null);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/routes/generate-future-metro', { 
+      const response = await axios.post('https://transit-navigator.onrender.com](https://transit-navigator.onrender.com/api/v1/routes/generate-future-metro', { 
         source: greenfieldStartName, 
         destination: greenfieldEndName, 
         city: selectedCity
